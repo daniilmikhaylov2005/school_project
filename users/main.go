@@ -76,7 +76,7 @@ func main() {
 }
 
 func NewConn() (*sqlx.DB, error) {
-	if err := godotenv.Load("./users/.env"); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		return nil, err
 	}
 
