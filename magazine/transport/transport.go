@@ -67,3 +67,11 @@ func (s *MagazineServer) CreateClass(ctx context.Context, in *pb.CreateClassRequ
 	}
 	return &pb.CreateClassResponse{MagazineCode: int64(magazineCode)}, nil
 }
+
+func (s *MagazineServer) GetClass(ctx context.Context, in *pb.GetClassRequest) (*pb.GetClassResponse, error) {
+	class, err := s.repository.GetClass(in.GetMagazineCode())
+	if err != nil {
+		return nil, status.Error(codes.Unknown, "failed to gte class")
+	}
+	return class, nil
+}

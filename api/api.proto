@@ -47,11 +47,14 @@ message GetUserResponse {
 
 service Magazine {
   rpc CreateClass(CreateClassRequest) returns (CreateClassResponse) {}
+  rpc GetClass(GetClassRequest) returns (GetClassResponse) {}
 }
 
 message Kid {
   string fullname = 1;
   int64 age = 2;
+  int64 id = 3;
+  int64 graduate = 4;
 }
 
 message CreateClassRequest {
@@ -63,4 +66,13 @@ message CreateClassRequest {
 
 message CreateClassResponse {
   int64 magazine_code = 1;
+}
+
+message GetClassRequest {
+  int64 magazine_code = 1;
+}
+
+message GetClassResponse {
+  string teacher_fullname = 1;
+  repeated Kid children = 2;
 }

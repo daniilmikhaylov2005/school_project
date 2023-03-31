@@ -10,7 +10,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-// const address = "localhost:50000"
+//const address = "localhost:50000"
+
 const address = "localhost:50001"
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	//client := pb.NewUserClient(conn)
+	// client := pb.NewUserClient(conn)
 
 	// u, err := client.CreateUser(context.Background(), &pb.CreateUserRequest{
 	// 	FirstName:  "Даниил",
@@ -36,12 +37,12 @@ func main() {
 	// Password: %s
 	// `, u.Id, u.Login, u.Password)
 
-	// u, err := client.GetUser(context.Background(), &pb.GetUserRequest{Login: "sadrezdev", Password: "123123"})
+	// u2, err := client.GetUser(context.Background(), &pb.GetUserRequest{Login: "sadrezdev", Password: "123123"})
 	// if err != nil {
 	// 	log.Fatalf("failed to get user: %v", err)
 	// }
 
-	// log.Println(u)
+	// log.Println(u2)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &AuthClaims{
 		StandardClaims: jwt.StandardClaims{
@@ -106,6 +107,19 @@ func main() {
 	})
 
 	log.Printf("Magazine code: %d\n", response.GetMagazineCode())
+
+	res2, err := client.GetClass(context.Background(), &pb.GetClassRequest{
+		MagazineCode: response.GetMagazineCode(),
+	})
+	if err != nil {
+		log.Fatalf("failed to get class: %v", err)
+	}
+
+	log.Printf("Teacher full name: %s\n", res2.GetTeacherFullname())
+
+	for i, v := range res2.Children {
+		log.Printf("%d) Kid id = %d\n\tKid fullname = %s\n\tKid age = %d\n\tKid graduate = %d", i, v.GetId(), v.GetFullname(), v.GetAge(), v.GetGraduate())
+	}
 }
 
 type AuthClaims struct {

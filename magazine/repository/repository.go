@@ -12,6 +12,7 @@ import (
 const (
 	magazineTable = "magazine"
 	kidTable      = "kid"
+	usersTable    = "users"
 )
 
 type Repository struct {
@@ -49,4 +50,38 @@ func (r *Repository) CreateClass(children []*pb.Kid, teacher_login string, gradu
 
 	tx.Commit()
 	return magazineCode, nil
+}
+
+func (r *Repository) GetClass(magazine_code int64) (*pb.GetClassResponse, error) {
+	var teacher_firstname, teacher_secondname string
+	var class pb.GetClassResponse
+	query := fmt.Sprintf("SELECT firstname, secondname FROM %s WHERE login = (SELECT teacher_login FROM %s WHERE magazine_code=$1)", usersTable, magazineTable)
+	err := r.db.QueryRow(query, magazine_code).Scan(&teacher_firstname, &teacher_secondname)
+	if err != nil {
+		return nil, fmt.Errorf("failed to select teacher login from db: %v", err)
+	}
+	class.TeacherFullname = fmt.Sprintf("%s %s", teacher_firstname, teacher_secondname)
+
+	query2 := fmt.Sprintf("SELECT id, fullname, age, graduate FROM %s WHERE magazine_code=$1", kidTable)
+	rows, err := r.db.Query(query2, magazine_code)
+	if err != nil {
+		return nil, fmt.Errorf("failed to select children from db: %v", err)
+	}
+
+	for rows.Next() {
+		var (
+			id       int
+			fullname string
+			age      int
+			graduate int
+		)
+
+		if err := rows.Scan(&id, &fullname, &age, &graduate); err != nil {
+			return nil, fmt.Errorf("failed to select kid from row: %v", err)
+		}
+
+		class.Children = append(class.Children, &pb.Kid{Fullname: fullname, Age: int64(age), Id: int64(id), Graduate: int64(graduate)})
+	}
+
+	return &class, nil
 }

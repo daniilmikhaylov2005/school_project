@@ -145,6 +145,7 @@ var User_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MagazineClient interface {
 	CreateClass(ctx context.Context, in *CreateClassRequest, opts ...grpc.CallOption) (*CreateClassResponse, error)
+	GetClass(ctx context.Context, in *GetClassRequest, opts ...grpc.CallOption) (*GetClassResponse, error)
 }
 
 type magazineClient struct {
@@ -164,11 +165,21 @@ func (c *magazineClient) CreateClass(ctx context.Context, in *CreateClassRequest
 	return out, nil
 }
 
+func (c *magazineClient) GetClass(ctx context.Context, in *GetClassRequest, opts ...grpc.CallOption) (*GetClassResponse, error) {
+	out := new(GetClassResponse)
+	err := c.cc.Invoke(ctx, "/api.Magazine/GetClass", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MagazineServer is the server API for Magazine service.
 // All implementations must embed UnimplementedMagazineServer
 // for forward compatibility
 type MagazineServer interface {
 	CreateClass(context.Context, *CreateClassRequest) (*CreateClassResponse, error)
+	GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error)
 	mustEmbedUnimplementedMagazineServer()
 }
 
@@ -178,6 +189,9 @@ type UnimplementedMagazineServer struct {
 
 func (UnimplementedMagazineServer) CreateClass(context.Context, *CreateClassRequest) (*CreateClassResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateClass not implemented")
+}
+func (UnimplementedMagazineServer) GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClass not implemented")
 }
 func (UnimplementedMagazineServer) mustEmbedUnimplementedMagazineServer() {}
 
@@ -210,6 +224,24 @@ func _Magazine_CreateClass_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Magazine_GetClass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClassRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MagazineServer).GetClass(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Magazine/GetClass",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MagazineServer).GetClass(ctx, req.(*GetClassRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Magazine_ServiceDesc is the grpc.ServiceDesc for Magazine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -220,6 +252,10 @@ var Magazine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateClass",
 			Handler:    _Magazine_CreateClass_Handler,
+		},
+		{
+			MethodName: "GetClass",
+			Handler:    _Magazine_GetClass_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
