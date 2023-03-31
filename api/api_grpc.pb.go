@@ -139,3 +139,89 @@ var User_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/api.proto",
 }
+
+// MagazineClient is the client API for Magazine service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type MagazineClient interface {
+	CreateClass(ctx context.Context, in *CreateClassRequest, opts ...grpc.CallOption) (*CreateClassResponse, error)
+}
+
+type magazineClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMagazineClient(cc grpc.ClientConnInterface) MagazineClient {
+	return &magazineClient{cc}
+}
+
+func (c *magazineClient) CreateClass(ctx context.Context, in *CreateClassRequest, opts ...grpc.CallOption) (*CreateClassResponse, error) {
+	out := new(CreateClassResponse)
+	err := c.cc.Invoke(ctx, "/api.Magazine/CreateClass", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MagazineServer is the server API for Magazine service.
+// All implementations must embed UnimplementedMagazineServer
+// for forward compatibility
+type MagazineServer interface {
+	CreateClass(context.Context, *CreateClassRequest) (*CreateClassResponse, error)
+	mustEmbedUnimplementedMagazineServer()
+}
+
+// UnimplementedMagazineServer must be embedded to have forward compatible implementations.
+type UnimplementedMagazineServer struct {
+}
+
+func (UnimplementedMagazineServer) CreateClass(context.Context, *CreateClassRequest) (*CreateClassResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateClass not implemented")
+}
+func (UnimplementedMagazineServer) mustEmbedUnimplementedMagazineServer() {}
+
+// UnsafeMagazineServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MagazineServer will
+// result in compilation errors.
+type UnsafeMagazineServer interface {
+	mustEmbedUnimplementedMagazineServer()
+}
+
+func RegisterMagazineServer(s grpc.ServiceRegistrar, srv MagazineServer) {
+	s.RegisterService(&Magazine_ServiceDesc, srv)
+}
+
+func _Magazine_CreateClass_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateClassRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MagazineServer).CreateClass(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Magazine/CreateClass",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MagazineServer).CreateClass(ctx, req.(*CreateClassRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Magazine_ServiceDesc is the grpc.ServiceDesc for Magazine service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Magazine_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.Magazine",
+	HandlerType: (*MagazineServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateClass",
+			Handler:    _Magazine_CreateClass_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/api.proto",
+}

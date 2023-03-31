@@ -29,21 +29,21 @@ type UserServer struct {
 }
 
 func (s *UserServer) CreateUser(ctx context.Context, in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(in.Password), 7)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(in.GetPassword()), 7)
 	if err != nil {
 		return nil, status.Error(codes.Aborted, "failed to hash password")
 	}
-	id, err := s.repository.CreateUser(in.FirstName, in.SecondName, in.Login, in.Email, string(hashedPassword))
+	id, err := s.repository.CreateUser(in.GetFirstName(), in.GetSecondName(), in.GetLogin(), in.GetEmail(), string(hashedPassword))
 	if err != nil {
 		return nil, status.Error(codes.Unknown, "failed to create user")
 	}
 
-	log.Printf("Created user: %s\n", in.Login)
-	return &pb.CreateUserResponse{Login: in.Login, Password: in.Password, Id: int64(id)}, nil
+	log.Printf("Created user: %s\n", in.GetLogin())
+	return &pb.CreateUserResponse{Login: in.GetLogin(), Password: in.GetPassword(), Id: int64(id)}, nil
 }
 
 func (s *UserServer) GetUser(ctx context.Context, in *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	user, err := s.repository.GetUserByLogin(in.Login)
+	user, err := s.repository.GetUserByLogin(in.GetLogin())
 	if err != nil {
 		if errors.Is(err, repository.NoUsersError) {
 			return nil, status.Error(codes.NotFound, "failed to get user")
@@ -51,11 +51,11 @@ func (s *UserServer) GetUser(ctx context.Context, in *pb.GetUserRequest) (*pb.Ge
 		return nil, status.Error(codes.Unknown, "failed to get user")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.GetPassword()), []byte(in.GetPassword())); err != nil {
 		return nil, status.Error(codes.PermissionDenied, "failed to compare hash and password")
 	}
 
-	log.Printf("Geted user: %s\n", user.Login)
+	log.Printf("Geted user: %s\n", user.GetLogin())
 	return user, nil
 }
 

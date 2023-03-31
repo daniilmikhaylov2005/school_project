@@ -41,4 +41,26 @@ message GetUserResponse {
   string password = 6;
 }
 
+/*
+  Magazine service
+*/
 
+service Magazine {
+  rpc CreateClass(CreateClassRequest) returns (CreateClassResponse) {}
+}
+
+message Kid {
+  string fullname = 1;
+  int64 age = 2;
+}
+
+message CreateClassRequest {
+  repeated Kid children = 1;
+  string teacher_login = 2;
+  string jwt = 3;
+  int64 graduate = 4;
+}
+
+message CreateClassResponse {
+  int64 magazine_code = 1;
+}
