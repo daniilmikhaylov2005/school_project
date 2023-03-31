@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS "magazine" (
 
 CREATE TABLE IF NOT EXISTS "kid" (
     "magazine_code" int NOT NULL,
+    "id" serial PRIMARY KEY,
     "fullname" varchar NOT NULL,
     "age" integer NOT NULL,
     "graduate" integer NOT NULL,
