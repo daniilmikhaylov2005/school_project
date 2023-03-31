@@ -29,6 +29,7 @@ message CreateUserResponse {
 
 message GetUserRequest {
   string login = 1;
+  string password = 2;
 }
 
 message GetUserResponse {

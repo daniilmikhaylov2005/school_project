@@ -19,17 +19,24 @@ func main() {
 
 	client := pb.NewUserClient(conn)
 
-	u, err := client.CreateUser(context.Background(), &pb.CreateUserRequest{
-		FirstName:  "Даниил",
-		SecondName: "Михайлов",
-		Email:      "sadrezdev@gmail.com",
-		Login:      "sadrezdev",
-		Password:   "123123",
-	})
+	// u, err := client.CreateUser(context.Background(), &pb.CreateUserRequest{
+	// 	FirstName:  "Даниил",
+	// 	SecondName: "Михайлов",
+	// 	Email:      "sadrezdev@gmail.com",
+	// 	Login:      "sadrezdev",
+	// 	Password:   "123123",
+	// })
 
-	log.Printf(`Details:
-	Id: %d
-	Login: %s
-	Password: %s
-	`, u.Id, u.Login, u.Password)
+	// log.Printf(`Details:
+	// Id: %d
+	// Login: %s
+	// Password: %s
+	// `, u.Id, u.Login, u.Password)
+
+	u, err := client.GetUser(context.Background(), &pb.GetUserRequest{Login: "sadrezdev", Password: "123123"})
+	if err != nil {
+		log.Fatalf("failed to get user: %v", err)
+	}
+
+	log.Println(u)
 }

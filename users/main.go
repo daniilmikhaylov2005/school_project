@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -36,7 +37,26 @@ func (s *UserServer) CreateUser(ctx context.Context, in *pb.CreateUserRequest) (
 	if err != nil {
 		return nil, status.Error(codes.Unknown, "failed to create user")
 	}
+
+	log.Printf("Created user: %s\n", in.Login)
 	return &pb.CreateUserResponse{Login: in.Login, Password: in.Password, Id: int64(id)}, nil
+}
+
+func (s *UserServer) GetUser(ctx context.Context, in *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+	user, err := s.repository.GetUserByLogin(in.Login)
+	if err != nil {
+		if errors.Is(err, repository.NoUsersError) {
+			return nil, status.Error(codes.NotFound, "failed to get user")
+		}
+		return nil, status.Error(codes.Unknown, "failed to get user")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password)); err != nil {
+		return nil, status.Error(codes.PermissionDenied, "failed to compare hash and password")
+	}
+
+	log.Printf("Geted user: %s\n", user.Login)
+	return user, nil
 }
 
 func main() {
