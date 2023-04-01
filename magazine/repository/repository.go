@@ -1,10 +1,14 @@
 package repository
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"math/rand"
+	"time"
 
 	pb "github.com/daniilmikhaylov2005/school_project/api"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -13,7 +17,10 @@ const (
 	magazineTable = "magazine"
 	kidTable      = "kid"
 	usersTable    = "users"
+	gradesTable   = "grades"
 )
+
+var ErrNotFound = errors.New("not found")
 
 type Repository struct {
 	db *sqlx.DB
@@ -65,6 +72,9 @@ func (r *Repository) GetClass(magazine_code int64) (*pb.GetClassResponse, error)
 	query2 := fmt.Sprintf("SELECT id, fullname, age, graduate FROM %s WHERE magazine_code=$1", kidTable)
 	rows, err := r.db.Query(query2, magazine_code)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
 		return nil, fmt.Errorf("failed to select children from db: %v", err)
 	}
 
@@ -83,5 +93,70 @@ func (r *Repository) GetClass(magazine_code int64) (*pb.GetClassResponse, error)
 		class.Children = append(class.Children, &pb.Kid{Fullname: fullname, Age: int64(age), Id: int64(id), Graduate: int64(graduate)})
 	}
 
+	return &class, nil
+}
+
+func (r *Repository) GetClassGrades(magazine_code int64) (*pb.GetClassGradesResponse, error) {
+	var class pb.GetClassGradesResponse
+	class.MagazineCode = magazine_code
+	query := fmt.Sprintf("SELECT id, fullname, age, graduate FROM %s WHERE magazine_code=$1", kidTable)
+	rows, err := r.db.Query(query, magazine_code)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to select ids from kid table: %v", err)
+	}
+
+	for rows.Next() {
+		var (
+			id       int
+			fullname string
+			age      int
+			graduate int
+		)
+
+		if err := rows.Scan(&id, &fullname, &age, &graduate); err != nil {
+			return nil, fmt.Errorf("failed to select kid from row: %v", err)
+		}
+
+		// grades of kid
+		grades := make([]*pb.Grade, 0)
+		query2 := fmt.Sprintf("SELECT date, subject, grade FROM %s WHERE kid_id=$1", gradesTable)
+		rows2, err := r.db.Query(query2, id)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, ErrNotFound
+			}
+			return nil, fmt.Errorf("failed to select ids from grade table: %v", err)
+		}
+
+		for rows2.Next() {
+			var (
+				date    time.Time
+				subject string
+				grade   int64
+			)
+			if err := rows2.Scan(&date, &subject, &grade); err != nil {
+				return nil, fmt.Errorf("failed to select grade from row: %v", err)
+			}
+			grades = append(grades, &pb.Grade{
+				Date:    timestamppb.New(date),
+				Subject: subject,
+				Grade:   grade,
+			})
+		}
+
+		var kid_grades pb.KidGrades
+		kid_grades.Kid = &pb.Kid{
+			Id:       int64(id),
+			Fullname: fullname,
+			Age:      int64(age),
+			Graduate: int64(graduate),
+		}
+
+		kid_grades.Grades = grades
+		class.ChildrenGrades = append(class.ChildrenGrades, &kid_grades)
+	}
 	return &class, nil
 }

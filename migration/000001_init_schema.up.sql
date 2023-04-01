@@ -11,3 +11,11 @@ CREATE TABLE IF NOT EXISTS "kid" (
     "graduate" integer NOT NULL,
     FOREIGN KEY ("magazine_code")  REFERENCES "magazine" ("magazine_code") ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS "grades" (
+    "kid_id" int NOT NULL,
+    "date" timestamp NOT NULL,
+    "subject" varchar NOT NULL,
+    "grade" int NOT NULL,
+    FOREIGN KEY ("kid_id") REFERENCES "kid" ("id") ON DELETE CASCADE
+);

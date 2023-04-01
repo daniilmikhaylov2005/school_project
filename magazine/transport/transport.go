@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	pb "github.com/daniilmikhaylov2005/school_project/api"
 	"github.com/daniilmikhaylov2005/school_project/magazine/repository"
@@ -54,6 +55,7 @@ func NewMagazineServer(jwtSecret string, repository *repository.Repository) *Mag
 func (s *MagazineServer) CreateClass(ctx context.Context, in *pb.CreateClassRequest) (*pb.CreateClassResponse, error) {
 	parsedJwt, err := ParseToken(in.GetJwt(), []byte(s.jwtSecret))
 	if err != nil {
+		log.Printf("[error] %v\n", err)
 		return nil, status.Error(codes.PermissionDenied, "invalid jwt")
 	}
 
@@ -63,6 +65,7 @@ func (s *MagazineServer) CreateClass(ctx context.Context, in *pb.CreateClassRequ
 
 	magazineCode, err := s.repository.CreateClass(in.GetChildren(), in.GetTeacherLogin(), in.GetGraduate())
 	if err != nil {
+		log.Printf("[error] %v\n", err)
 		return nil, status.Error(codes.Unknown, "failed to create class")
 	}
 	return &pb.CreateClassResponse{MagazineCode: int64(magazineCode)}, nil
@@ -71,7 +74,20 @@ func (s *MagazineServer) CreateClass(ctx context.Context, in *pb.CreateClassRequ
 func (s *MagazineServer) GetClass(ctx context.Context, in *pb.GetClassRequest) (*pb.GetClassResponse, error) {
 	class, err := s.repository.GetClass(in.GetMagazineCode())
 	if err != nil {
-		return nil, status.Error(codes.Unknown, "failed to gte class")
+		log.Printf("[error] %v\n", err)
+		return nil, status.Error(codes.Unknown, "failed to get class")
 	}
 	return class, nil
+}
+
+func (s *MagazineServer) GetClassGrades(ctx context.Context, in *pb.GetClassGradesRequest) (*pb.GetClassGradesResponse, error) {
+	childrenGrades, err := s.repository.GetClassGrades(in.GetMagazineCode())
+	if err != nil {
+		log.Printf("[error] %v\n", err)
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, status.Error(codes.NotFound, "grades of children not found with this code")
+		}
+		return nil, status.Error(codes.Unknown, "failed to get grades of children")
+	}
+	return childrenGrades, nil
 }
