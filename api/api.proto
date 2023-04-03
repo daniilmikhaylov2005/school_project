@@ -50,6 +50,7 @@ service Magazine {
   rpc CreateClass(CreateClassRequest) returns (CreateClassResponse) {}
   rpc GetClass(GetClassRequest) returns (GetClassResponse) {}
   rpc GetClassGrades(GetClassGradesRequest) returns (GetClassGradesResponse) {}
+  rpc CreateGrade(CreateGradeRequest) returns (CreateGradeResponse) {}
 }
 
 message Kid {
@@ -97,4 +98,14 @@ message GetClassGradesRequest {
 message GetClassGradesResponse {
   int64 magazine_code = 1;
   repeated KidGrades children_grades = 2;
+}
+
+message CreateGradeRequest {
+  string jwt = 1;
+  int64 kid_id = 2;
+  Grade grade = 3;
+}
+
+message CreateGradeResponse {
+  string status = 1;
 }

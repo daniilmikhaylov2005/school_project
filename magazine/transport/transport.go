@@ -91,3 +91,29 @@ func (s *MagazineServer) GetClassGrades(ctx context.Context, in *pb.GetClassGrad
 	}
 	return childrenGrades, nil
 }
+
+func (s *MagazineServer) CreateGrade(ctx context.Context, in *pb.CreateGradeRequest) (*pb.CreateGradeResponse, error) {
+	teacher_login, err := ParseToken(in.GetJwt(), []byte(s.jwtSecret))
+	if err != nil {
+		log.Printf("[error] %v\n", err)
+		if errors.Is(err, ErrInvalidAccessToken) {
+			return nil, status.Error(codes.PermissionDenied, "wrong jwt")
+		}
+		return nil, status.Error(codes.Unknown, "invalid jwt")
+	}
+	err = s.repository.CreateTeacherHistory(teacher_login, fmt.Sprintf("graded kid by %d", in.GetGrade().GetGrade()))
+	if err != nil {
+		log.Printf("[error] %v\n", err)
+		return nil, status.Error(codes.Unknown, "failed to create teacher history")
+	}
+
+	err = s.repository.CreateGrade(in.GetKidId(), in.GetGrade())
+	if err != nil {
+		log.Printf("[error] %v\n", err)
+		return nil, status.Error(codes.Unknown, "failed to create grade")
+	}
+
+	return &pb.CreateGradeResponse{
+		Status: "created",
+	}, nil
+}

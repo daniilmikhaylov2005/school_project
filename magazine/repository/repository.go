@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	magazineTable = "magazine"
-	kidTable      = "kid"
-	usersTable    = "users"
-	gradesTable   = "grades"
+	magazineTable       = "magazine"
+	kidTable            = "kid"
+	usersTable          = "users"
+	gradesTable         = "grades"
+	teacherHistoryTable = "teacher_history"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -159,4 +160,16 @@ func (r *Repository) GetClassGrades(magazine_code int64) (*pb.GetClassGradesResp
 		class.ChildrenGrades = append(class.ChildrenGrades, &kid_grades)
 	}
 	return &class, nil
+}
+
+func (r *Repository) CreateTeacherHistory(teacher_login, action string) error {
+	query := fmt.Sprintf("INSERT INTO %s (teacher_login, action) VALUES ($1, $2)", teacherHistoryTable)
+	_, err := r.db.Exec(query, teacher_login, action)
+	return err
+}
+
+func (r *Repository) CreateGrade(kid_id int64, grade *pb.Grade) error {
+	query := fmt.Sprintf("INSERT INTO %s (kid_id, date, subject, grade) VALUES ($1, $2, $3, $4)", gradesTable)
+	_, err := r.db.Exec(query, kid_id, grade.GetDate().AsTime(), grade.GetSubject(), grade.GetGrade())
+	return err
 }

@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	pb "github.com/daniilmikhaylov2005/school_project/api"
 	"github.com/golang-jwt/jwt/v4"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 //const address = "localhost:50000"
@@ -120,21 +122,52 @@ func main() {
 	// 	log.Printf("%d) Kid id = %d\n\tKid fullname = %s\n\tKid age = %d\n\tKid graduate = %d", i, v.GetId(), v.GetFullname(), v.GetAge(), v.GetGraduate())
 	// }
 
+	// client := pb.NewMagazineClient(conn)
+	// r3, err := client.GetClassGrades(context.Background(), &pb.GetClassGradesRequest{
+	// 	MagazineCode: 568,
+	// })
+
+	// if err != nil {
+	// 	log.Fatalf("failed to get grades: %v", err)
+	// }
+
+	// log.Println("Magazine code", r3.GetMagazineCode())
+
+	// for _, v := range r3.GetChildrenGrades() {
+	// 	log.Println("Kid info: ", v.GetKid())
+	// 	log.Println("Grades: ", v.GetGrades())
+	// }
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &AuthClaims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 10).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+		Teacher_Login: "sadrezdev",
+	})
+
+	jwtKey, err := token.SignedString([]byte("jojo"))
+	if err != nil {
+		log.Fatalf("failed to sign token: %v", err)
+	}
+
 	client := pb.NewMagazineClient(conn)
-	r3, err := client.GetClassGrades(context.Background(), &pb.GetClassGradesRequest{
-		MagazineCode: 568,
+
+	r4, err := client.CreateGrade(context.Background(), &pb.CreateGradeRequest{
+		Jwt:   jwtKey,
+		KidId: 8,
+		Grade: &pb.Grade{
+			Date:    timestamppb.Now(),
+			Subject: "biology",
+			Grade:   2,
+		},
 	})
 
 	if err != nil {
-		log.Fatalf("failed to get grades: %v", err)
+		log.Fatalf("failed to create grade: %v", err)
 	}
 
-	log.Println("Magazine code", r3.GetMagazineCode())
-
-	for _, v := range r3.GetChildrenGrades() {
-		log.Println("Kid info: ", v.GetKid())
-		log.Println("Grades: ", v.GetGrades())
-	}
+	log.Println(r4.GetStatus())
 
 }
 
