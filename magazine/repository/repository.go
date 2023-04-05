@@ -104,7 +104,7 @@ func (r *Repository) GetClassGrades(magazine_code int64) (*pb.GetClassGradesResp
 	rows, err := r.db.Query(query, magazine_code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, fmt.Errorf("kids %v", ErrNotFound)
 		}
 		return nil, fmt.Errorf("failed to select ids from kid table: %v", err)
 	}
@@ -127,7 +127,7 @@ func (r *Repository) GetClassGrades(magazine_code int64) (*pb.GetClassGradesResp
 		rows2, err := r.db.Query(query2, id)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return nil, ErrNotFound
+				return nil, fmt.Errorf("grades of a kid %v", ErrNotFound)
 			}
 			return nil, fmt.Errorf("failed to select ids from grade table: %v", err)
 		}
@@ -172,4 +172,52 @@ func (r *Repository) CreateGrade(kid_id int64, grade *pb.Grade) error {
 	query := fmt.Sprintf("INSERT INTO %s (kid_id, date, subject, grade) VALUES ($1, $2, $3, $4)", gradesTable)
 	_, err := r.db.Exec(query, kid_id, grade.GetDate().AsTime(), grade.GetSubject(), grade.GetGrade())
 	return err
+}
+
+func (r *Repository) GetGrades(kid_id int64) (*pb.GetGradesResponse, error) {
+	var response pb.GetGradesResponse
+	query := fmt.Sprintf("SELECT date, subject, grade FROM %s WHERE kid_id=$1", gradesTable)
+	rows, err := r.db.Query(query, kid_id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("grades %v", ErrNotFound)
+		}
+		return nil, err
+	}
+
+	for rows.Next() {
+		var (
+			date    time.Time
+			subject string
+			grade   int64
+		)
+
+		if err := rows.Scan(&date, &subject, &grade); err != nil {
+			return nil, err
+		}
+
+		response.Grades.Grades = append(response.Grades.Grades, &pb.Grade{Date: timestamppb.New(date), Subject: subject, Grade: grade})
+	}
+
+	var (
+		fullname string
+		age      int64
+		graduate int64
+	)
+
+	query2 := fmt.Sprintf("SELECT fullname, age, graduate FROM %s WHERE id=$1", kidTable)
+	err = r.db.QueryRow(query2, kid_id).Scan(&fullname, &age, &graduate)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("kid %v", ErrNotFound)
+		}
+		return nil, err
+	}
+
+	response.Grades.Kid.Fullname = fullname
+	response.Grades.Kid.Age = age
+	response.Grades.Kid.Graduate = graduate
+	response.Grades.Kid.Id = kid_id
+
+	return &response, nil
 }

@@ -117,3 +117,14 @@ func (s *MagazineServer) CreateGrade(ctx context.Context, in *pb.CreateGradeRequ
 		Status: "created",
 	}, nil
 }
+
+func (s *MagazineServer) GetGrade(ctx context.Context, in *pb.GetGradesRequest) (*pb.GetGradesResponse, error) {
+	response, err := s.repository.GetGrades(in.GetKidId())
+	if err != nil {
+		log.Printf("[error] %v\n", err)
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, status.Error(codes.NotFound, "failed to get grades of kid")
+		}
+	}
+	return response, nil
+}

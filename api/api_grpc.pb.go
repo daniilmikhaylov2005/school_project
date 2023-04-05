@@ -148,6 +148,7 @@ type MagazineClient interface {
 	GetClass(ctx context.Context, in *GetClassRequest, opts ...grpc.CallOption) (*GetClassResponse, error)
 	GetClassGrades(ctx context.Context, in *GetClassGradesRequest, opts ...grpc.CallOption) (*GetClassGradesResponse, error)
 	CreateGrade(ctx context.Context, in *CreateGradeRequest, opts ...grpc.CallOption) (*CreateGradeResponse, error)
+	GetGrades(ctx context.Context, in *GetGradesRequest, opts ...grpc.CallOption) (*GetGradesResponse, error)
 }
 
 type magazineClient struct {
@@ -194,6 +195,15 @@ func (c *magazineClient) CreateGrade(ctx context.Context, in *CreateGradeRequest
 	return out, nil
 }
 
+func (c *magazineClient) GetGrades(ctx context.Context, in *GetGradesRequest, opts ...grpc.CallOption) (*GetGradesResponse, error) {
+	out := new(GetGradesResponse)
+	err := c.cc.Invoke(ctx, "/api.Magazine/GetGrades", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MagazineServer is the server API for Magazine service.
 // All implementations must embed UnimplementedMagazineServer
 // for forward compatibility
@@ -202,6 +212,7 @@ type MagazineServer interface {
 	GetClass(context.Context, *GetClassRequest) (*GetClassResponse, error)
 	GetClassGrades(context.Context, *GetClassGradesRequest) (*GetClassGradesResponse, error)
 	CreateGrade(context.Context, *CreateGradeRequest) (*CreateGradeResponse, error)
+	GetGrades(context.Context, *GetGradesRequest) (*GetGradesResponse, error)
 	mustEmbedUnimplementedMagazineServer()
 }
 
@@ -220,6 +231,9 @@ func (UnimplementedMagazineServer) GetClassGrades(context.Context, *GetClassGrad
 }
 func (UnimplementedMagazineServer) CreateGrade(context.Context, *CreateGradeRequest) (*CreateGradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateGrade not implemented")
+}
+func (UnimplementedMagazineServer) GetGrades(context.Context, *GetGradesRequest) (*GetGradesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGrades not implemented")
 }
 func (UnimplementedMagazineServer) mustEmbedUnimplementedMagazineServer() {}
 
@@ -306,6 +320,24 @@ func _Magazine_CreateGrade_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Magazine_GetGrades_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGradesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MagazineServer).GetGrades(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Magazine/GetGrades",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MagazineServer).GetGrades(ctx, req.(*GetGradesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Magazine_ServiceDesc is the grpc.ServiceDesc for Magazine service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -328,6 +360,10 @@ var Magazine_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateGrade",
 			Handler:    _Magazine_CreateGrade_Handler,
+		},
+		{
+			MethodName: "GetGrades",
+			Handler:    _Magazine_GetGrades_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
